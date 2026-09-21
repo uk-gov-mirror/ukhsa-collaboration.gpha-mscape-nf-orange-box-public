@@ -29,12 +29,12 @@ workflow ORANGE_BOX {
     out_dir
     server
     bucket
-    profile_tables
+    profiles_json
     taxaplease
 
     main:
     QC_SAMPLE(climb_id, out_dir, server)
-    CLASPAR(climb_id, server, profile_tables, taxaplease)
+    CLASPAR(climb_id, server, profiles_json, taxaplease)
     PORTAL(climb_id, QC_SAMPLE.out.analysis_json, CLASPAR.out.analysis_json_viralign, CLASPAR.out.analysis_json_kraken, CLASPAR.out.analysis_json_sylph)
 
     FIRST_ONYX_WRITE(climb_id, "QC", QC_SAMPLE.out.analysis_json, server, bucket, PORTAL.out.ready_to_go)

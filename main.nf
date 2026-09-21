@@ -19,5 +19,5 @@ workflow {
         }
         .set { ch_climbids }
 
-    ORANGE_BOX(ch_climbids, params.outdir, params.server, params.bucket, params.profile_tables, params.taxaplease_db)
+    ORANGE_BOX(ch_climbids, params.outdir, params.server, params.bucket, params.profiles_json, params.taxaplease_db)
 }
