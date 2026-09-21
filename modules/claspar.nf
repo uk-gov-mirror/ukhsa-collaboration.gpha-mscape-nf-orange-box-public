@@ -8,7 +8,7 @@ process CLASPAR {
             - climb_id: Climb ID for a given sample
             - server: Where Onyx results should go i.e. synthscape or mscape.
             - outdir: (optional) Output dir - here given as . (work dir) and Nextflow will publish to params.outdir anyway.
-            - profile_tables: path to excel spreadsheet which contains the taxa to profile mappings.
+            - profiles_json: path to json which contains the taxa to profile mappings.
             - taxaplease: path to taxaplease database. If not provided, a new database will be created for each sample.
 
         Outputs:
@@ -24,7 +24,7 @@ process CLASPAR {
     input:
     val climb_id
     val server
-    path profile_tables
+    path profiles_json
     path taxaplease
 
     output:
@@ -41,7 +41,7 @@ process CLASPAR {
     script:
     """
     echo "Running ClasPar..."
-    claspar -i $climb_id -o . -s $server -p $profile_tables -d $taxaplease
+    claspar -i $climb_id -o . -s $server -p $profiles_json -d $taxaplease
 
     echo "Finished ClasPar."
     """
