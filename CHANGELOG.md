@@ -1,4 +1,27 @@
-# v1.0.0-alpha
+# Changelog
+
+## v1.0.1-beta
+Updated Claspar version.
+
+### Changes:
+* Claspar version and command
+* param name from 'p'rofile_tables' to 'profiles_json'.
+
+---
+---
+
+## v1.0.0-beta:
+General tidy of the codebase. This is a working deployment.
+
+### Changes:
+* Removed 'fake claspar' in comments from testing.
+* Tidied comments
+* Changed the claspar container to recent version (v2.1.1).
+
+---
+---
+
+## v1.0.0-alpha
 
 Alpha release, preparing for production release of v1.0.0.
 
