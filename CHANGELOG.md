@@ -1,17 +1,18 @@
 # Changelog
 
-
-
 [unreleased]v.1.0.0
 neat first release
 ### Changes:
 * Added devscape to the profiles
+* Added devscape to the bin/orange_box_onyx_S3.py and orange_box_publish.py
 * bumped claspar and QC versions.
+* bumbed onyx analysis helper version to 0.6.7.
+* changed funnel_processes to use new onyx analysis helper scripts
 ### Added:
+* analysis_funnel subworkflow
 ### Fixed:
-### Security:
-### Deprecated:
-### Removed:
+
+
 
 ---
 ---
