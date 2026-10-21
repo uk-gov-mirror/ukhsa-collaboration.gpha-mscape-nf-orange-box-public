@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { ORANGE_BOX } from "./workflows/box"
+include { ORANGE_BOX } from "./workflows/orange_box"
 
 
 workflow {

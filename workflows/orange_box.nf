@@ -1,16 +1,11 @@
-#!/usr/bin/env nextflow
+include { QC_ANALYSIS }      from "../subworkflows/qc.nf"
+include { QC_FUNNEL }        from "../subworkflows/qc.nf"
 
-include { QC_SAMPLE }        from "../modules/qc_metrics.nf"
-include { CLASPAR }          from "../modules/claspar.nf"
+include { CLASPAR_ANALYSIS } from "../subworkflows/claspar.nf"
+include { CLASPAR_FUNNEL }   from "../subworkflows/claspar.nf"
 
 include { PORTAL }           from "../modules/funnel_processes.nf"
 include { PUBLISH_ONYX }     from "../modules/funnel_processes.nf"
-
-include { ANALYSIS_FUNNEL as QC_FUNNEL }       from "./analysis_funnel.nf"
-include { ANALYSIS_FUNNEL as VIRALIGN_FUNNEL } from "./analysis_funnel.nf"
-include { ANALYSIS_FUNNEL as KRAKEN_FUNNEL }   from "./analysis_funnel.nf"
-include { ANALYSIS_FUNNEL as SYLPH_FUNNEL }    from "./analysis_funnel.nf"
-
 
 workflow ORANGE_BOX {
 
@@ -24,13 +19,13 @@ workflow ORANGE_BOX {
 
     main:
 
-    QC_SAMPLE(
+    QC_ANALYSIS(
         climb_id,
         out_dir,
         server
     )
 
-    CLASPAR(
+    CLASPAR_ANALYSIS(
         climb_id,
         server,
         profiles_json,
@@ -39,59 +34,44 @@ workflow ORANGE_BOX {
 
     PORTAL(
         climb_id,
-        QC_SAMPLE.out.analysis_json,
-        CLASPAR.out.analysis_json_viralign,
-        CLASPAR.out.analysis_json_kraken,
-        CLASPAR.out.analysis_json_sylph
+        QC_ANALYSIS.out.analysis_json,
+        CLASPAR_ANALYSIS.out.analysis_json_viralign,
+        CLASPAR_ANALYSIS.out.analysis_json_kraken,
+        CLASPAR_ANALYSIS.out.analysis_json_sylph
     )
 
     QC_FUNNEL(
         climb_id,
-        "QC",
-        QC_SAMPLE.out.analysis_json,
         server,
         bucket,
         PORTAL.out.ready_to_go,
-        QC_SAMPLE.out.upload_files
+        QC_ANALYSIS.out.analysis_json,
+        QC_ANALYSIS.out.upload_files
     )
 
-    VIRALIGN_FUNNEL(
+    CLASPAR_FUNNEL(
         climb_id,
-        "CLASPAR_VA",
-        CLASPAR.out.analysis_json_viralign,
         server,
         bucket,
         PORTAL.out.ready_to_go,
-        CLASPAR.out.upload_files_viralign
-    )
 
-    KRAKEN_FUNNEL(
-        climb_id,
-        "CLASPAR_KRAKEN",
-        CLASPAR.out.analysis_json_kraken,
-        server,
-        bucket,
-        PORTAL.out.ready_to_go,
-        CLASPAR.out.upload_files_kraken
-    )
+        CLASPAR_ANALYSIS.out.analysis_json_viralign,
+        CLASPAR_ANALYSIS.out.upload_files_viralign,
 
-    SYLPH_FUNNEL(
-        climb_id,
-        "CLASPAR_SYLPH",
-        CLASPAR.out.analysis_json_sylph,
-        server,
-        bucket,
-        PORTAL.out.ready_to_go,
-        CLASPAR.out.upload_files_sylph
+        CLASPAR_ANALYSIS.out.analysis_json_kraken,
+        CLASPAR_ANALYSIS.out.upload_files_kraken,
+
+        CLASPAR_ANALYSIS.out.analysis_json_sylph,
+        CLASPAR_ANALYSIS.out.upload_files_sylph
     )
 
     PUBLISH_ONYX(
         climb_id,
         server,
         QC_FUNNEL.out.analysis_id_file,
-        VIRALIGN_FUNNEL.out.analysis_id_file,
-        KRAKEN_FUNNEL.out.analysis_id_file,
-        SYLPH_FUNNEL.out.analysis_id_file
+        CLASPAR_FUNNEL.out.viralign_analysis_id,
+        CLASPAR_FUNNEL.out.kraken_analysis_id,
+        CLASPAR_FUNNEL.out.sylph_analysis_id
     )
 
     emit:
@@ -101,8 +81,6 @@ workflow ORANGE_BOX {
 
     funnel_logs =
         QC_FUNNEL.out.funnel_logs
-            .mix(VIRALIGN_FUNNEL.out.funnel_logs)
-            .mix(KRAKEN_FUNNEL.out.funnel_logs)
-            .mix(SYLPH_FUNNEL.out.funnel_logs)
+            .mix(CLASPAR_FUNNEL.out.funnel_logs)
             .mix(PUBLISH_ONYX.out.publish_logs)
 }
