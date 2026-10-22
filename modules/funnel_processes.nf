@@ -38,6 +38,9 @@ process PORTAL {
     path "${climb_id}.claspar-krakenbacteria.analysis_fields.json"
     path "${climb_id}.claspar-sylph.analysis_fields.json"
 
+    // unclassified fastqc inputs
+    path "${climb_id}.unclassified_readQC.analysis_fields.json"
+
     output:
     val true, emit: ready_to_go
 
@@ -246,6 +249,9 @@ process PUBLISH_ONYX {
     path "${climb_id}.CLASPAR_KRAKEN.analysis_id"
     path "${climb_id}.CLASPAR_SYLPH.analysis_id"
 
+    // unclassified read qc inputs
+    path "${climb_id}.UNCLASSIFIED_READQC.analysis_id"
+
     output:
     path "${climb_id}.Orange_Box_Onyx_publish_log.txt", emit: publish_logs
 
@@ -257,7 +263,8 @@ process PUBLISH_ONYX {
         ${climb_id}.QC.analysis_id \
         ${climb_id}.CLASPAR_VA.analysis_id \
         ${climb_id}.CLASPAR_KRAKEN.analysis_id \
-        ${climb_id}.CLASPAR_SYLPH.analysis_id
+        ${climb_id}.CLASPAR_SYLPH.analysis_id \
+        ${climb_id}.UNCLASSIFIED_READQC.analysis_id 
     do
         echo "Publishing \$ANALYSIS_ID_FILE"
 
