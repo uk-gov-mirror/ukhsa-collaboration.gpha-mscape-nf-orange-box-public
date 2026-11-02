@@ -2,7 +2,7 @@ process FASTQ_READ_STATS {
     label "process_tiny"
 
     // change to the gpha-mscape-fastq-read-stats container
-    container "community.wave.seqera.io/library/pyfastx_pip_pyfunctional_pytest:10dc317fc97efcc2"
+    container "ghcr.io/ukhsa-collaboration/gpha-mscape-fastq-read-stats:0.2.0"
     publishDir "${outdir}/${climb_id}", mode: 'copy'
 
     input:
@@ -38,7 +38,7 @@ process FASTQ_READ_STATS {
 
 process CREATE_READQC_ONYX_JSON {
     // change to the gpha-mscape-fastq-read-stats container
-    container 'ghcr.io/ukhsa-collaboration/gpha-mscape-onyx-analysis-helper:0.6.7'
+    container 'ghcr.io/ukhsa-collaboration/gpha-mscape-fastq-read-stats:0.2.0'
     cpus 2
     memory '2GB'
     tag "${climb_id}"
