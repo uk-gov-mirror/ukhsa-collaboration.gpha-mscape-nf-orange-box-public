@@ -32,7 +32,7 @@ Or you can run directly from GitHub:
 
 ## Add a new module
 
-The Orange Box workflow is structured using Nextflow modules and subworkflows. Analysis tools are implemented as individual modules, while publication of results to Onyx and S3 is handled through a shared ANALYSIS_FUNNEL subworkflow.
+The Orange Box workflow is structured using Nextflow modules and subworkflows. Each analysis is implemented within its own subworkflow (for example `qc.nf` or `claspar.nf`), which is responsible for generating the analysis outputs required by the Orange Box pipeline. Publication of results to Onyx and S3 is handled through a shared ANALYSIS_FUNNEL subworkflow.
 
 All analyses follow the same publication pathway:
 
@@ -61,19 +61,59 @@ Every Orange Box analysis module must emit:
 - upload_files: Files uploaded to S3
 - Optional (but encouraged) log_file
 
-### 2: Import the Module
+### 2: Create a new subworkflow
 
-Add the module import to workflows/orange_box.nf:
+Once a module has been created, it must be added to the Orange Box through an analysis-specific subworkflow.
+
+Create a new file under subworkflows/new_subworkflow.nf
+
+Add the module import to subworkflows/new_subworkflow.nf:
 
 `include { NEW_MODULE } from "../modules/new_module.nf" `
+`include { ANALYSIS_FUNNEL } from "../modules/analysis_funnel.nf" `
 
-### 3: Execute the Module
+`workflow NEWMODULE_ANALYSIS {
+    take:
+    climb_id
+    server `
 
-Within workflow ORANGE_BOX, add the module call:
+`    main:
+    NEWTHING( climb_id, server ) `
 
-`NEW_MODULE( climb_id,server)`
+    emit:
+    analysis_json = NEWMODULE.out.analysis_json
+    upload_files = NEWMODULE.out.upload_files } `
+`workflow NEWMODULE_FUNNEL {
+    take:
+        climb_id
+        server
+        bucket
+        ready_to_go
+        analysis_json upload_files
+    main:
+    ANALYSIS_FUNNEL(
+        climb_id,
+        "NEWMODULE",
+        analysis_json,
+        server,
+        bucket,
+        ready_to_go,
+        upload_files )
+    emit:
+        analysis_id_file = ANALYSIS_FUNNEL.out.analysis_id_file
+        funnel_logs = ANALYSIS_FUNNEL.out.funnel_logs }`
 
-Adjust inputs as required by the module.
+### 3: Import the subworkflow into the orange box
+
+Within workflow ORANGE_BOX, add the subworkflow call:
+
+`include { NEWMODULE_ANALYSIS } from "./subworkflows/newmodule.nf"
+include { NEWMODULE_FUNNEL } from "./subworkflows/newmodule.nf"`
+
+Add the analysis to the orange box, adjusting inputs as required.
+`NEWMODULE_ANALYSIS(
+    climb_id,
+    server)`
 
 ### 4: Update PORTAL Dependencies
 
@@ -88,27 +128,26 @@ Then update the PORTAL invocation in orange_box.nf:
 
 `PORTAL(climb_id,QC_SAMPLE.out.analysis_json,CLASPAR.out.analysis_json_viralign,CLASPAR.out.analysis_json_kraken,CLASPAR.out.analysis_json_sylph,NEW_MODULE.out.analysis_json)`
 
-### 5: Create a Funnel Instance
+### 5: Add the funnel to the workflow
 
-Import an alias of the shared ANALYSIS_FUNNEL workflow:
 
-`include { ANALYSIS_FUNNEL as NEW_MODULE_FUNNEL } from "./analysis_funnel.nf"`
+`NEWMODULE_FUNNEL(
+climb_id,
+server,
+bucket,
+PORTAL.out.ready_to_go,
+NEWMODULE_ANALYSIS.out.analysis_json,
+NEWMODULE.out.upload_files)"`
 
-add a call within the workflow:
-
-`NEW_MODULE_FUNNEL(climb_id,"NEW_MODULE",NEW_MODULE.out.analysis_json,server,bucket,PORTAL.out.ready_to_go,NEW_MODULE.out.upload_files)`
-
-Note: A workflow can only be called once per name within a workflow scope. Aliases allow the same subworkflow to be reused for multiple analyses:
-
-`include { ANALYSIS_FUNNEL as QC_FUNNEL } `
-`include { ANALYSIS_FUNNEL as VIRALIGN_FUNNEL } `
-`include { ANALYSIS_FUNNEL as KRAKEN_FUNNEL } `
-`include { ANALYSIS_FUNNEL as SYLPH_FUNNEL } `
 
 ### 6: Update PUBLISH_ONYX
 
-Add the new analysis ID file to the `PUBLISH_ONYX` call
+Add the new analysis ID file to the `PUBLISH_ONYX` call and to the funnel_logs.
 
 `PUBLISH_ONYX(climb_id,server,QC_FUNNEL.out.analysis_id_file,VIRALIGN_FUNNEL.out.analysis_id_file,KRAKEN_FUNNEL.out.analysis_id_file,SYLPH_FUNNEL.out.analysis_id_file,NEW_MODULE_FUNNEL.out.analysis_id_file)`
+
+`funnel_logs=
+    ...
+    .mix(NEWMODULE_FUNNEL.out.funnel_logs)`
 
 You will also need to update the `PUBLISH_ONYX` process definition in: modules/funnel_processes.nf to accept the additional analysis ID file as an input. Similarly, update the `--analysis_id_files` argument passed to `orange_box_publish.py`.
